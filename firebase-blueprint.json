@@ -1,0 +1,89 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and family affiliation.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "familyId": { "type": "string", "description": "6-digit code for the family group." },
+        "email": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "familyId"]
+    },
+    "Family": {
+      "title": "Family Group",
+      "description": "A group representing a family unit.",
+      "type": "object",
+      "properties": {
+        "familyId": { "type": "string" },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["familyId", "name"]
+    },
+    "Post": {
+      "title": "Feed Post",
+      "description": "A photo or text note shared on the family wall.",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "content": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorId", "content", "timestamp"]
+    },
+    "Task": {
+      "title": "Shared Task",
+      "description": "A grocery item or chore.",
+      "type": "object",
+      "properties": {
+        "taskName": { "type": "string" },
+        "isCompleted": { "type": "boolean" },
+        "assignedTo": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["taskName", "isCompleted", "createdAt"]
+    },
+    "VaultItem": {
+      "title": "Family Secret",
+      "description": "Sensitive information like Wi-Fi passwords.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "value": { "type": "string" },
+        "updatedBy": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "value"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "Public (to family) user profiles."
+    },
+    "/families/{familyId}": {
+      "schema": "Family",
+      "description": "Family group metadata."
+    },
+    "/families/{familyId}/posts/{postId}": {
+      "schema": "Post",
+      "description": "Family feed posts."
+    },
+    "/families/{familyId}/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Family shared checklist."
+    },
+    "/families/{familyId}/vault/{vaultId}": {
+      "schema": "VaultItem",
+      "description": "Sensitive family information."
+    }
+  }
+}
