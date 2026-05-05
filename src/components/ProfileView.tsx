@@ -250,7 +250,7 @@ export default function ProfileView({ onBack }: { onBack?: () => void }) {
             <label className="text-xs md:text-sm font-semibold text-slate-700 ml-1">Display Name</label>
             <input
               type="text"
-              value={displayName}
+              value={displayName || ''}
               onChange={(e) => setDisplayName(e.target.value)}
               className="w-full h-12 md:h-14 px-4 md:px-6 bg-white border border-slate-200 rounded-[18px] md:rounded-2xl shadow-soft focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all font-medium text-sm md:text-base"
               placeholder="e.g. Dad, Sarah, Grandpa"
@@ -266,7 +266,7 @@ export default function ProfileView({ onBack }: { onBack?: () => void }) {
               </div>
               <input
                 type="url"
-                value={photoURL}
+                value={photoURL || ''}
                 onChange={(e) => setPhotoURL(e.target.value)}
                 className="w-full h-12 md:h-14 pl-12 md:pl-14 pr-4 md:px-6 bg-white border border-slate-200 rounded-[18px] md:rounded-2xl shadow-soft focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all font-medium text-sm md:text-base"
                 placeholder="https://example.com/image.jpg"
@@ -281,7 +281,7 @@ export default function ProfileView({ onBack }: { onBack?: () => void }) {
               <Calendar className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="date"
-                value={birthday}
+                value={birthday || ''}
                 onChange={(e) => setBirthday(e.target.value)}
                 className="w-full h-12 md:h-14 pl-12 md:pl-14 pr-4 md:px-6 bg-white border border-slate-200 rounded-[18px] md:rounded-2xl shadow-soft focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all font-medium text-sm md:text-base"
               />
@@ -301,7 +301,7 @@ export default function ProfileView({ onBack }: { onBack?: () => void }) {
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Family Hub Name</label>
                 <input
                   type="text"
-                  value={familyName}
+                  value={familyName || ''}
                   onChange={(e) => setFamilyName(e.target.value)}
                   className="w-full h-12 md:h-14 px-4 md:px-6 bg-indigo-50/30 border border-indigo-100 rounded-[18px] md:rounded-2xl shadow-soft focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all font-bold text-indigo-900 text-sm md:text-base"
                   placeholder="The Smiths Hub"

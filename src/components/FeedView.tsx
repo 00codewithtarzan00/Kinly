@@ -374,7 +374,7 @@ export default function FeedView({ onProfileClick, onNavVisibilityChange }: { on
 
               <div className="flex-1 relative flex flex-col min-h-0">
                 <textarea
-                  value={newPost}
+                  value={newPost || ''}
                   onChange={(e) => setNewPost(e.target.value)}
                   placeholder={recipient === 'everyone' ? "What's the word with the fam?" : `Note for ${getAlias(recipient, members.find(m => m.uid === recipient)?.displayName || 'someone')}...`}
                   className="flex-1 bg-transparent text-white text-2xl md:text-3xl font-bold placeholder:text-white/20 outline-none resize-none no-scrollbar py-4"

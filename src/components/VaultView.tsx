@@ -318,7 +318,7 @@ export default function VaultView() {
                   id="vault-title-input"
                   type="text"
                   placeholder="Label (e.g. Wi-Fi)"
-                  value={newItem.title}
+                  value={newItem.title || ''}
                   onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
                   className="w-full p-3 text-base md:text-xl border-b-2 border-slate-50 outline-none focus:border-[#1a1a1a] bg-transparent"
                 />
@@ -326,7 +326,7 @@ export default function VaultView() {
                   id="vault-value-input"
                   type="text"
                   placeholder="The Secret"
-                  value={newItem.value}
+                  value={newItem.value || ''}
                   onChange={(e) => setNewItem({ ...newItem, value: e.target.value })}
                   className="w-full p-3 text-base md:text-xl border-b-2 border-slate-50 outline-none focus:border-[#1a1a1a] bg-transparent"
                 />

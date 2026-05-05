@@ -166,7 +166,7 @@ export default function OnboardingView() {
                   <input
                     id="user-name-input"
                     type="text"
-                    value={userName}
+                    value={userName || ''}
                     onChange={(e) => setUserName(e.target.value)}
                     placeholder="E.g. Dadi"
                     className="w-full bg-transparent text-2xl md:text-3xl text-center font-black tracking-tight text-[#1a1a1a] outline-none placeholder:text-slate-100 py-2 border-b-2 border-slate-50 focus:border-[#1a1a1a] transition-all"
@@ -179,7 +179,7 @@ export default function OnboardingView() {
                     id="family-code-input"
                     type="text"
                     maxLength={6}
-                    value={code}
+                    value={code || ''}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
                     placeholder="000 000"
                     className="w-full bg-transparent text-4xl md:text-5xl text-center font-black tracking-tighter text-[#1a1a1a] outline-none placeholder:text-slate-100 py-4 border-b-4 border-slate-50 focus:border-[#1a1a1a] transition-all font-mono"
@@ -213,7 +213,7 @@ export default function OnboardingView() {
                   <input
                     id="user-name-input"
                     type="text"
-                    value={userName}
+                    value={userName || ''}
                     onChange={(e) => setUserName(e.target.value)}
                     placeholder="E.g. Dada"
                     className="w-full bg-transparent text-2xl md:text-3xl text-center font-black tracking-tight text-[#1a1a1a] outline-none placeholder:text-slate-100 py-2 border-b-2 border-slate-50 focus:border-[#1a1a1a] transition-all"
@@ -225,7 +225,7 @@ export default function OnboardingView() {
                   <input
                     id="family-name-input"
                     type="text"
-                    value={familyName}
+                    value={familyName || ''}
                     onChange={(e) => setFamilyName(e.target.value)}
                     placeholder="The Smiths"
                     className="w-full bg-transparent text-3xl md:text-4xl text-center font-black tracking-tighter text-[#1a1a1a] outline-none placeholder:text-slate-100 py-4 border-b-4 border-slate-50 focus:border-[#1a1a1a] transition-all"

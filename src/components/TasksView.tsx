@@ -212,7 +212,7 @@ export default function TasksView() {
                     </p>
                     <input 
                       type="datetime-local"
-                      value={deadline}
+                      value={deadline || ''}
                       onChange={(e) => setDeadline(e.target.value)}
                       className="px-4 py-2 bg-white border border-slate-100 rounded-2xl text-xs font-bold text-slate-600 outline-none w-full shadow-sm"
                     />
@@ -223,7 +223,7 @@ export default function TasksView() {
                   <input
                     id="task-input"
                     type="text"
-                    value={newTaskName}
+                    value={newTaskName || ''}
                     onChange={(e) => setNewTaskName(e.target.value)}
                     placeholder="Task details..."
                     className="flex-1 bg-white p-5 rounded-[20px] shadow-soft border border-slate-100 text-base outline-none focus:ring-2 focus:ring-indigo-100 transition-all font-medium text-[#1a1a1a] placeholder:text-slate-300"
