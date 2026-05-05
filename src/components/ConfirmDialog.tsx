@@ -10,7 +10,8 @@ interface ConfirmDialogProps {
   cancelLabel: string;
   onConfirm: () => void;
   onCancel: () => void;
-  type?: 'danger' | 'warning';
+  type?: 'danger' | 'warning' | 'info';
+  children?: React.ReactNode;
 }
 
 export default function ConfirmDialog({
@@ -21,12 +22,13 @@ export default function ConfirmDialog({
   cancelLabel,
   onConfirm,
   onCancel,
-  type = 'danger'
+  type = 'danger',
+  children
 }: ConfirmDialogProps) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -47,14 +49,20 @@ export default function ConfirmDialog({
               <X size={24} />
             </button>
 
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto ${
-              type === 'danger' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
-            }`}>
-              <AlertTriangle size={32} />
-            </div>
+            {!children && (
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto ${
+                type === 'danger' ? 'bg-red-100 text-red-600' : 
+                type === 'warning' ? 'bg-amber-100 text-amber-600' :
+                'bg-indigo-100 text-indigo-600'
+              }`}>
+                <AlertTriangle size={32} />
+              </div>
+            )}
 
             <h3 className="text-2xl font-bold text-center text-slate-900 mb-2">{title}</h3>
-            <p className="text-lg text-center text-slate-600 mb-8">{message}</p>
+            <p className="text-lg text-center text-slate-600 mb-6">{message}</p>
+
+            {children && <div className="mb-6">{children}</div>}
 
             <div className="flex flex-col gap-3">
               <button
@@ -64,7 +72,9 @@ export default function ConfirmDialog({
                   onCancel();
                 }}
                 className={`w-full py-4 rounded-2xl text-xl font-bold transition-all active:scale-95 ${
-                  type === 'danger' ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-amber-600 text-white hover:bg-amber-700'
+                  type === 'danger' ? 'bg-red-600 text-white hover:bg-red-700' : 
+                  type === 'warning' ? 'bg-amber-600 text-white hover:bg-amber-700' :
+                  'bg-[#1a1a1a] text-white'
                 }`}
               >
                 {confirmLabel}

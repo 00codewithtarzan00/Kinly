@@ -13,13 +13,25 @@
   html {
     @apply antialiased scroll-smooth;
     background-color: var(--color-surface);
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  html::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
   }
   
   body {
     @apply font-sans;
-    font-size: 18px;
+    font-size: 16px;
     color: var(--color-brand);
     letter-spacing: -0.011em;
+  }
+  
+  @media (min-width: 768px) {
+    body {
+      font-size: 18px;
+    }
   }
 
   h1, h2, h3, h4 {
@@ -31,8 +43,7 @@
   }
 
   input, textarea {
-    @apply transition-all duration-200;
-    font-size: 1.1rem !important;
+    @apply transition-all duration-200 text-base md:text-[1.1rem];
   }
 }
 
@@ -45,5 +56,19 @@
   }
   .shadow-premium {
     box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.08);
+  }
+  .head-border {
+    @apply ring-4 ring-amber-400 ring-offset-2 border-amber-500 shadow-[0_0_20px_rgba(251,191,36,0.4)];
+  }
+  
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
   }
 }

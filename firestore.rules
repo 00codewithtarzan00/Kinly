@@ -10,99 +10,113 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
-    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
     function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
 
-    // Check if user is a member of the specific family
-    function isFamilyMember(familyId) {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId == familyId;
+    // Efficient Relational Identity Helper
+    function isMemberOf(familyId) {
+      let path = /databases/$(database)/documents/users/$(request.auth.uid);
+      return isSignedIn() && exists(path) && get(path).data.get('familyId', null) == familyId;
+    }
+
+    function isFamilyHead(familyId) {
+      let path = /databases/$(database)/documents/users/$(request.auth.uid);
+      let userData = exists(path) ? get(path).data : {};
+      return isSignedIn() && 
+             userData.get('familyId', null) == familyId && 
+             userData.get('isHead', false) == true;
     }
 
     // --- Collection: Users ---
     match /users/{uid} {
-      allow get: if isSignedIn() && (request.auth.uid == uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId == resource.data.familyId);
-      allow list: if isSignedIn() && resource.data.familyId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId;
-      
-      allow create: if isSignedIn() && request.auth.uid == uid && isValidUser(incoming());
-      allow update: if isSignedIn() && request.auth.uid == uid && isValidUser(incoming()) && (
-        // Only allow updating specific fields, but not familyId if it's already set (to prevent hopping)
-        (incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt']) && incoming().familyId == existing().familyId) ||
-        // Allow setting familyId if it was null
-        (existing().familyId == null && incoming().diff(existing()).affectedKeys().hasOnly(['familyId', 'updatedAt']))
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update: if isSignedIn() && (
+        request.auth.uid == uid || 
+        isFamilyHead(existing().get('familyId', 'none'))
       );
-    }
+      allow delete: if isSignedIn() && request.auth.uid == uid;
 
-    function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'displayName', 'familyId']) &&
-             data.uid == request.auth.uid &&
-             data.displayName is string && data.displayName.size() <= 100 &&
-             (data.familyId == null || (data.familyId is string && data.familyId.size() == 6)) &&
-             data.updatedAt == request.time;
+      // Personal identifiers/nicknames
+      match /memberAliases/{targetUid} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
     }
 
     // --- Collection: Families ---
     match /families/{familyId} {
-      allow get: if isFamilyMember(familyId);
-      allow create: if isSignedIn() && isValidFamily(incoming());
-      // No updates for now to keep it simple, or only by member
-      allow update: if isFamilyMember(familyId) && isValidFamily(incoming()) &&
-                    incoming().diff(existing()).affectedKeys().hasOnly(['name']);
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        isMemberOf(familyId) ||
+        existing().get('headId', null) == null
+      );
     }
 
-    function isValidFamily(data) {
-      return data.keys().hasAll(['familyId', 'name', 'createdAt']) &&
-             data.familyId is string && data.familyId.size() == 6 &&
-             data.name is string && data.name.size() <= 100 &&
-             data.createdAt == (resource == null ? request.time : resource.data.createdAt);
-    }
-
-    // --- Sub-collections under Families ---
-    match /families/{familyId}/{collection=**} {
-       // Root gate for all sub-resources
-       allow read, write: if isFamilyMember(familyId);
-    }
-
+    // --- Sub-collections under Families (Wall, Tasks, Vault) ---
+    
     match /families/{familyId}/posts/{postId} {
-      allow create: if isFamilyMember(familyId) && isValidPost(incoming());
-      allow delete: if isFamilyMember(familyId) && (existing().authorId == request.auth.uid);
+      allow read: if isMemberOf(familyId);
+      allow create: if isMemberOf(familyId) && (isSystemNotification(incoming()) || isValidPost(incoming()));
+      allow delete: if isMemberOf(familyId) && (existing().authorId == request.auth.uid || isFamilyHead(familyId));
+    }
+
+    function isSystemNotification(data) {
+      return data.get('authorId', null) == 'system';
     }
 
     function isValidPost(data) {
-      return data.keys().hasAll(['authorId', 'authorName', 'content', 'timestamp']) &&
-             data.authorId == request.auth.uid &&
-             data.authorName is string &&
-             data.content is string && data.content.size() <= 1000 &&
-             data.timestamp == request.time &&
-             (!data.keys().contains('imageUrl') || (data.imageUrl is string && data.imageUrl.size() <= 1000));
+      let isCreate = resource == null;
+      let hasRequired = !isCreate || data.keys().hasAll(['authorId', 'authorName', 'content', 'timestamp']);
+      
+      return hasRequired &&
+             (!data.keys().contains('authorId') || data.authorId == request.auth.uid) &&
+             (!data.keys().contains('content') || (data.content is string && data.content.size() <= 5000)) &&
+             (!data.keys().contains('timestamp') || data.timestamp == request.time);
     }
 
     match /families/{familyId}/tasks/{taskId} {
-      allow create: if isFamilyMember(familyId) && isValidTask(incoming());
-      allow update: if isFamilyMember(familyId) && isValidTask(incoming()) && (
-        incoming().diff(existing()).affectedKeys().hasOnly(['isCompleted', 'assignedTo'])
+      allow read: if isMemberOf(familyId);
+      allow create: if isMemberOf(familyId) && isValidTask(incoming());
+      allow update: if isMemberOf(familyId) && (
+        // Allow updating deadlineNotified independently or with status
+        (incoming().diff(existing()).affectedKeys().hasOnly(['deadlineNotified'])) ||
+        (incoming().diff(existing()).affectedKeys().hasAny(['deadlineNotified', 'isCompleted', 'completedById', 'completedByName'])) ||
+        isValidTask(incoming())
       );
-      allow delete: if isFamilyMember(familyId);
+      allow delete: if isMemberOf(familyId) && existing().createdBy == request.auth.uid;
     }
 
     function isValidTask(data) {
-      return data.keys().hasAll(['taskName', 'isCompleted', 'createdBy', 'createdAt']) &&
-             data.taskName is string && data.taskName.size() <= 200 &&
-             data.isCompleted is bool &&
-             data.createdBy is string &&
-             data.createdAt == (resource == null ? request.time : resource.data.createdAt);
+      let isCreate = resource == null;
+      let hasRequired = !isCreate || data.keys().hasAll(['taskName', 'isCompleted', 'createdAt', 'createdBy']);
+      
+      return hasRequired &&
+             (!data.keys().contains('taskName') || (data.taskName is string && data.taskName.size() <= 500)) &&
+             (!data.keys().contains('isCompleted') || data.isCompleted is bool) &&
+             (!data.keys().contains('createdBy') || data.createdBy == (isCreate ? request.auth.uid : existing().createdBy)) &&
+             (!data.keys().contains('assignedId') || data.assignedId == null || data.assignedId is string) &&
+             (!data.keys().contains('assignedName') || data.assignedName == null || data.assignedName is string) &&
+             (!data.keys().contains('deadline') || data.deadline == null || data.deadline is timestamp) &&
+             (!data.keys().contains('deadlineNotified') || data.deadlineNotified is bool) &&
+             (!data.keys().contains('createdAt') || data.createdAt == (isCreate ? request.time : existing().get('createdAt', request.time))) &&
+             (!data.keys().contains('updatedAt') || data.updatedAt == request.time);
     }
 
     match /families/{familyId}/vault/{vaultId} {
-      allow create, update: if isFamilyMember(familyId) && isValidVaultItem(incoming());
-      allow delete: if isFamilyMember(familyId);
+      allow read: if isMemberOf(familyId);
+      allow create, update: if isMemberOf(familyId) && isValidVaultItem(incoming());
+      allow delete: if isMemberOf(familyId);
     }
 
     function isValidVaultItem(data) {
-      return data.keys().hasAll(['title', 'value', 'updatedBy', 'updatedAt']) &&
-             data.title is string && data.title.size() <= 100 &&
-             data.value is string && data.value.size() <= 1000 &&
-             data.updatedBy == request.auth.uid &&
-             data.updatedAt == request.time;
+      let isCreate = resource == null;
+      let hasRequired = !isCreate || data.keys().hasAll(['title', 'value', 'updatedBy', 'updatedAt']);
+      
+      return hasRequired &&
+             (!data.keys().contains('title') || (data.title is string && data.title.size() <= 200)) &&
+             (!data.keys().contains('value') || (data.value is string && data.value.size() <= 5000)) &&
+             (!data.keys().contains('updatedBy') || data.updatedBy == request.auth.uid) &&
+             (!data.keys().contains('updatedAt') || data.updatedAt == request.time);
     }
   }
 }
