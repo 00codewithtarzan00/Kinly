@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { signInWithGoogle, db, auth, getRedirectResult } from '../lib/firebase';
+import React, { useState } from 'react';
+import { signInWithGoogle, db } from '../lib/firebase';
 import { GoogleAuthProvider } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getGoogleBirthday } from '../lib/utils';
@@ -9,41 +9,30 @@ import { motion } from 'motion/react';
 export default function LoginView() {
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const handleRedirect = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          const credential = GoogleAuthProvider.credentialFromResult(result);
-          const accessToken = credential?.accessToken;
-
-          if (accessToken && result.user) {
-            const birthday = await getGoogleBirthday(accessToken);
-            if (birthday) {
-              const userDocRef = doc(db, 'users', result.user.uid);
-              await setDoc(userDocRef, {
-                birthday,
-                updatedAt: serverTimestamp()
-              }, { merge: true }).catch(err => {
-                console.error("Could not set birthday", err);
-              });
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Redirect result error:', error);
-      }
-    };
-
-    handleRedirect();
-  }, []);
-
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      await signInWithGoogle();
+      const result = await signInWithGoogle();
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      const accessToken = credential?.accessToken;
+
+      if (accessToken) {
+        const birthday = await getGoogleBirthday(accessToken);
+        if (birthday) {
+          // Update the user document with the birthday
+          const userDocRef = doc(db, 'users', result.user.uid);
+          // Use setDoc with merge: true to ensure it works even if the document was just created or doesn't exist yet
+          await setDoc(userDocRef, {
+            birthday,
+            updatedAt: serverTimestamp()
+          }, { merge: true }).catch(err => {
+            console.error("Could not set birthday", err);
+          });
+        }
+      }
     } catch (error) {
       console.error('Google login error:', error);
+    } finally {
       setIsLoading(false);
     }
   };
